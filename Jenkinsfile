@@ -1,47 +1,35 @@
-pipeline{
-  agent {
-    label {
-      label 'slave1'
-    }
+pipeline {
+  agent any
+  tools {
+    maven 'maven'
   }
   stages{
-    stage('git-clone'){
+    stage('1-git-clone'){
       steps{
-        checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'github-id', url: 'https://github.com/etechDevops/team3-parallel.git']]])
+        checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'github-id', url: 'https://github.com/EngConstance/etech-mavenApp.git']]])
       }
     }
-    stage('parallel-level'){
-      parallel {
-        stage('sub-job1'){
-          steps{
-            echo "sub-job1 task"
-          }
-        }
-        stage('sub-job2'){
-          steps{
-            echo "sub-job2 task"
-          }
-        }
-        stage('user-check'){
-          steps{
-            sh 'cat /etc/passwd | grep jenkins'
-          }
-        }
+    stage('2-cleanws'){
+      steps{
+        sh 'mvn clean'
       }
     }
-    stage('version-check'){
-       agent {
-    label {
-      label 'slave2'
-    }
-  }
+    stage('3-mavenbuild'){
       steps{
-        echo "end of parallel job"
+        sh 'mvn package'
       }
     }
-    stage('webhook-fix'){
+    stage('unittest'){
+        steps{
+            sh 'mvn test'
+        }
+    }
+    stage('codequality'){
       steps{
-        echo "webhook fix"
+        sh 'mvn clean verify sonar:sonar \
+  -Dsonar.projectKey=new-pipeline \
+  -Dsonar.host.url=http://ec2-44-194-10-153.compute-1.amazonaws.com:9000 \
+  -Dsonar.login=sqp_dae273a73d4295d7fabacabc0ec8806cb17ba6aa'
       }
     }
   }

@@ -1,1 +1,1 @@
-# gitproject
+# maven-etech-application
